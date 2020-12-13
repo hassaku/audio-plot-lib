@@ -1,0 +1,4 @@
+nose
+mock
+pydub
+audio-plot-lib
