@@ -68,7 +68,7 @@ var nearestY = y[nearestIdx];
 """
 
 
-def interactive_plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
+def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
     __set_context()
 
     p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
