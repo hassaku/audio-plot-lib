@@ -79,9 +79,9 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
 
     p.scatter(x, y)
 
-    hover_code = f"""
+    hover_code = """
     let mouseX = cb_data.geometry.x;
-    {__COMMON_JS}
+    {common_js}
     const marginX = {margin_x};
 
     if(diff[nearestIdx] > marginX) {
@@ -96,16 +96,16 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """
+    """.format(common_js=__COMMON_JS, margin_x=margin_x)
 
     callback = CustomJS(args={"x": x, "y": y}, code=hover_code)
     p.add_tools(HoverTool(tooltips=None, callback=callback))
 
-    tap_code = f"""
+    tap_code = """
     let mouseX = cb_obj.x;
-    {__COMMON_JS}
-    {__speak_js("`X is ${nearestX}. Y is ${nearestY}`"}
-    """
+    {common_js}
+    {speak_js}
+    """.format(common_js=__COMMON_JS, speak_js=__speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
 
     p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y}, code=tap_code))
     p.js_on_event(events.MouseEnter, speak_enter(title))
