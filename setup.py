@@ -16,7 +16,7 @@ setup(
     author="hassaku",
     author_email="hassaku.apps@gmail.com",
     url="https://github.com/hassaku/audio-plot-lib",
-    py_modules=["audio_plot_lib"],
+    packages=["audio_plot_lib"],
     include_package_data=True,
     install_requires=["pydub", "numpy", "gTTS"],
     tests_require=["nose", "mock"],
