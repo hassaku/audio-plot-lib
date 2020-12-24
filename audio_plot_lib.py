@@ -1,3 +1,4 @@
+import numpy as np
 from bokeh import events
 from bokeh.io import output_file, show
 from bokeh.layouts import column, row
