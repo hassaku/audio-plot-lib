@@ -6,22 +6,20 @@ from bokeh.models import CustomJS, HoverTool
 from bokeh.plotting import figure, output_notebook, show
 from IPython.display import HTML, display
 
-
 def __set_context():
     display(HTML('''
     <script>
-        if (typeof osc === 'undefined') {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            audioGain = audioContext.createGain();
-            panNode = audioContext.createStereoPanner();
-            osc = audioContext.createOscillator();
-            osc.connect(panNode);
-            panNode.connect(audioGain);
-            audioGain.connect(audioContext.destination);
-            osc.start(audioContext.currentTime);
-            audioGain.gain.setValueAtTime(0, audioContext.currentTime);
-            console.log("set context!");
-        }
+    if (typeof osc === 'undefined') {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioGain = audioContext.createGain();
+        panNode = audioContext.createStereoPanner();
+        osc = audioContext.createOscillator();
+        osc.connect(panNode);
+        panNode.connect(audioGain);
+        audioGain.connect(audioContext.destination);
+        osc.start(audioContext.currentTime);
+        audioGain.gain.setValueAtTime(0, audioContext.currentTime);
+    }
     </script>
     '''))
 
@@ -30,20 +28,20 @@ def __set_context():
 
 
 def __speak_js(utterance):
-	return f"""
-		window.speechSynthesis.cancel();
-		var msg = new SpeechSynthesisUtterance({utterance});
-		msg.lang = "en-US";
-		window.speechSynthesis.speak(msg);
-		"""
+    return f"""
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance({utterance});
+        msg.lang = "en-US";
+        window.speechSynthesis.speak(msg);
+        """
 
 
 def __speak_enter(title="image"):
-	return CustomJS(code=__speak_js(f"\'Enter {title}\'"))
+    return CustomJS(code=__speak_js(f"\'Enter {title}\'"))
 
 
 def __speak_leave(title="image"):
-	return CustomJS(code=__speak_js(f"\'Leave {title}\'"))
+    return CustomJS(code=__speak_js(f"\'Leave {title}\'"))
 
 
 __COMMON_JS = """
@@ -53,14 +51,14 @@ let minY = Math.min(...y);
 let maxY = Math.max(...y);
 
 if((mouseX == Infinity) || (mouseX < minX) || (mouseX > maxX)) {
-	return;
+    return;
 }
 
 var diff = [];
 var nearestIdx = 0;
 x.forEach(function(val, idx){
-	diff[idx] = Math.abs(mouseX - val);
-	nearestIdx = (diff[nearestIdx] < diff[idx]) ? nearestIdx : idx;
+    diff[idx] = Math.abs(mouseX - val);
+    nearestIdx = (diff[nearestIdx] < diff[idx]) ? nearestIdx : idx;
 });
 
 var nearestX = x[nearestIdx];
@@ -81,8 +79,8 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
 
     hover_code = """
     let mouseX = cb_data.geometry.x;
-    {common_js}
-    const marginX = {margin_x};
+    %s
+    const marginX = %s;
 
     if(diff[nearestIdx] > marginX) {
         return;
@@ -96,20 +94,20 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """.format(common_js=__COMMON_JS, margin_x=margin_x)
+    """ % (__COMMON_JS, margin_x)
 
     callback = CustomJS(args={"x": x, "y": y}, code=hover_code)
     p.add_tools(HoverTool(tooltips=None, callback=callback))
 
     tap_code = """
     let mouseX = cb_obj.x;
-    {common_js}
-    {speak_js}
-    """.format(common_js=__COMMON_JS, speak_js=__speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+    %s
+    %s
+    """ % (__COMMON_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
 
     p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y}, code=tap_code))
-    p.js_on_event(events.MouseEnter, speak_enter(title))
-    p.js_on_event(events.MouseLeave, speak_leave(title))
+    p.js_on_event(events.MouseEnter, __speak_enter(title))
+    p.js_on_event(events.MouseLeave, __speak_leave(title))
 
     output_file("audio_plot_lib.html")
     show(p)
