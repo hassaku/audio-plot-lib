@@ -1,7 +1,9 @@
+import copy
 import numpy as np
 from pydub import AudioSegment
 from pydub.generators import Sine, Pulse, Square, Sawtooth, Triangle, WhiteNoise
 from gtts import gTTS
+from IPython.display import Audio
 
 
 def __tts(utter: str):
@@ -52,14 +54,21 @@ def __sequential_plot(tones, lines, labels, min_freq, min_value, tic, duration, 
 
 
 def plot(lines: np.array, labels: list=None, ptype: str="sequential", duration: int=50, gain: int=-5, gains: list=None,
-        min_freq: float=130.813, max_freq: float=130.813*4, decimals: int=1, description: bool=True) -> AudioSegment:
-    assert lines.ndim == 2, "numpy array lines.ndim must be 2"
-    assert lines.shape[0] > lines.shape[1], "lines.shape must be time and lines each"
+        min_freq: float=130.813, max_freq: float=130.813*4, decimals: int=1, description: bool=True, autoplay: bool=True) -> AudioSegment:
 
-    if labels is None:
-        labels = ["line {}".format(l+1) for l in range(lines.shape[1])]
+    if type(lines) == list:
+        lines = np.array(copy.copy(lines))
     else:
-        assert len(labels) == lines.shape[1], "len(labels) must equal lines.shape[1]"
+        assert lines.ndim in [1, 2], "numpy array lines.ndim must be 1 or 2"
+        if lines.ndim == 2:
+            assert lines.shape[0] > lines.shape[1], "lines.shape must be time and lines each"
+        else:
+            lines = copy.copy(lines).reshape((-1, 1))
+
+        if labels is None:
+            labels = ["line {}".format(l+1) for l in range(lines.shape[1])]
+        else:
+            assert len(labels) == lines.shape[1], "len(labels) must equal lines.shape[1]"
 
     if gains is None:
         gains = [gain for _ in range(lines.shape[1])]
@@ -87,5 +96,9 @@ def plot(lines: np.array, labels: list=None, ptype: str="sequential", duration: 
     else:
         raise NotImplementedError("ptype must be sequential or overlay")
 
-    return tones
+    if autoplay:
+        Audio(tones.get_array_of_samples(), rate=tones.frame_rate*2, autoplay=True)
+
+    else:
+        return tones
 
