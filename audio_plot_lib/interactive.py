@@ -23,14 +23,12 @@ def __set_context():
     </script>
     '''))
 
-    output_notebook()
-
 
 
 def __speak_js(utterance):
     return f"""
         window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance({utterance});
+        let msg = new SpeechSynthesisUtterance({utterance});
         msg.lang = "en-US";
         window.speechSynthesis.speak(msg);
         """
@@ -61,12 +59,14 @@ x.forEach(function(val, idx){
     nearestIdx = (diff[nearestIdx] < diff[idx]) ? nearestIdx : idx;
 });
 
-var nearestX = x[nearestIdx];
-var nearestY = y[nearestIdx];
+let nearestX = x[nearestIdx];
+let nearestY = y[nearestIdx];
 """
 
 
 def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
+    # TODO: xが２次元のときには警告を出して、将来の複数プロットに備える
+
     __set_context()
 
     p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)

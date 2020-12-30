@@ -3,7 +3,7 @@ import numpy as np
 from pydub import AudioSegment
 from pydub.generators import Sine, Pulse, Square, Sawtooth, Triangle, WhiteNoise
 from gtts import gTTS
-from IPython.display import Audio
+from IPython.display import Audio, display
 
 
 def __tts(utter: str):
@@ -97,7 +97,7 @@ def plot(lines: np.array, labels: list=None, ptype: str="sequential", duration: 
         raise NotImplementedError("ptype must be sequential or overlay")
 
     if autoplay:
-        Audio(tones.get_array_of_samples(), rate=tones.frame_rate*2, autoplay=True)
+        display(Audio(tones.get_array_of_samples(), rate=tones.frame_rate*2, autoplay=True))
 
     else:
         return tones
