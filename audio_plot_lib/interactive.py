@@ -19,6 +19,7 @@ def __set_context():
         osc.start(audioContext.currentTime);
         audioGain.gain.setValueAtTime(0, audioContext.currentTime);
     }
+    oscTarget = 0;
     </script>
     '''))
 
@@ -54,6 +55,9 @@ if((mouseX == Infinity) || (mouseX < minX) || (mouseX > maxX)) {
 var diff = [];
 var nearestIdx = 0;
 x.forEach(function(val, idx){
+    if(label[idx] != oscTarget) {
+        return;
+    }
     diff[idx] = Math.abs(mouseX - val);
     nearestIdx = (diff[nearestIdx] < diff[idx]) ? nearestIdx : idx;
 });
@@ -63,8 +67,15 @@ let nearestY = y[nearestIdx];
 """
 
 
-def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
-    # TODO: xが２次元のときには警告を出して、将来の複数プロットに備える
+__COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+        '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
+        '#bcbd22', '#17becf']
+
+
+def plot(x, y=None, label=None, width=400, height=400, margin_x=1, title="graph"):
+    assert type(x) == list, "x must be list type data."
+    if label:
+        assert max(label) < len(__COLORS), "max label must be lower {}".format(len(__COLORS))
 
     __set_context()
     output_notebook()
@@ -75,7 +86,11 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
         y = copy.copy(x)
         x = np.arange(len(x)).tolist()
 
-    p.scatter(x, y)
+    if label == None:
+        label = np.zeros_like(y).tolist()
+
+    colors = [__COLORS[c] for c in label]
+    p.scatter(x, y, line_color=colors, fill_color=colors)
 
     hover_code = """
     let mouseX = cb_data.geometry.x;
@@ -96,7 +111,7 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
     panNode.pan.value = pan;  // left:-1 ~ right:1
     """ % (__COMMON_JS, margin_x)
 
-    callback = CustomJS(args={"x": x, "y": y}, code=hover_code)
+    callback = CustomJS(args={"x": x, "y": y, "label": label}, code=hover_code)
     p.add_tools(HoverTool(tooltips=None, callback=callback))
 
     tap_code = """
@@ -104,10 +119,17 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
     %s
     %s
     """ % (__COMMON_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+    p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
+                                       code=tap_code))
 
-    p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y}, code=tap_code))
+    double_tap_code = """
+    oscTarget = (oscTarget + 1) %% (maxLabel + 1);
+    %s
+    """ % (__speak_js("`label ${oscTarget} is selected`"))
+    p.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
+                                             code=double_tap_code))
+
     p.js_on_event(events.MouseEnter, __speak_enter(title))
     p.js_on_event(events.MouseLeave, __speak_leave(title))
 
     show(p)
-
