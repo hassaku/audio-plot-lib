@@ -1,7 +1,6 @@
 import copy
 import numpy as np
 from bokeh import events
-from bokeh.io import output_file
 from bokeh.models import CustomJS, HoverTool
 from bokeh.plotting import figure, output_notebook, show
 from IPython.display import HTML, display
@@ -68,6 +67,7 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
     # TODO: xが２次元のときには警告を出して、将来の複数プロットに備える
 
     __set_context()
+    output_notebook()
 
     p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
 
@@ -109,6 +109,5 @@ def plot(x, y=None, width=400, height=400, margin_x=1, title="graph"):
     p.js_on_event(events.MouseEnter, __speak_enter(title))
     p.js_on_event(events.MouseLeave, __speak_leave(title))
 
-    output_file("audio_plot_lib.html")
     show(p)
 
