@@ -24,7 +24,6 @@ def __set_context():
     '''))
 
 
-
 def __speak_js(utterance):
     return f"""
         window.speechSynthesis.cancel();
@@ -72,22 +71,65 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
         '#bcbd22', '#17becf']
 
 
-def plot(x, y=None, label=None, width=400, height=400, margin_x=1, title="graph"):
-    assert type(x) == list, "x must be list type data."
+def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400,
+         margin_x: int=1, title: str="graph"):
+    """Plots that represent data with sound and can be checked interactively
+
+    You can interactively check the data in graph form by moving the mouse cursor.
+    When you enter or leave the graph image, you will be notified by voice.
+    Also, when you move the mouse left or right on the graph image,
+    the y-axis value corresponding to that location will be expressed with a high or low tone.
+    A single click will read out the value corresponding to that location.
+    Also, double-clicking switches the group according to the label specified as an option.
+
+    Parameters
+    ----------
+    y : list
+        A list of values to be graphed.
+    x : list
+        A list of x-axis values corresponding to y-axis values.
+        If not specified, it is substituted by the value of the equal interval. Optional.
+    label : list
+        A list of grouping numbers for each value, which must start with zero.
+        You can compare the graph data by sound, switching between each number. Optional.
+    width : int
+        Width of the graph image (in pixels). Optional.
+    height : int
+        Height of the graph image (in pixels). Optional.
+    title: str
+        Graph name to be read out. Optional.
+
+    Examples
+    --------
+    >>> plot([0, 1, 2])
+    <IPython.core.display.HTML object>
+    >>> plot(x=[0, 1, 2], y=[4, 5, 6], label=[0, 0, 1])
+    <IPython.core.display.HTML object>
+    """
+
+    assert type(y) == list, "y must be list type data."
+
     if label:
         assert max(label) < len(__COLORS), "max label must be lower {}".format(len(__COLORS))
+        assert max(label) + 1 == len(set(label)), "label should be in {} because max label is {}.".format(
+                    list(range(max(label) + 1)), max(label))
 
-    __set_context()
-    output_notebook()
+    if type(y) == np.ndarray:
+        y = y.tolist()
 
-    p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
-
-    if y == None:
-        y = copy.copy(x)
-        x = np.arange(len(x)).tolist()
+    if x == None:
+        x = np.arange(len(y)).tolist()
+    elif type(x) == np.ndarray:
+        x = x.tolist()
 
     if label == None:
         label = np.zeros_like(y).tolist()
+    elif type(label) == np.ndarray:
+        label = label.tolist()
+
+    __set_context()
+    output_notebook()
+    p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
 
     colors = [__COLORS[c] for c in label]
     p.scatter(x, y, line_color=colors, fill_color=colors)
@@ -122,12 +164,13 @@ def plot(x, y=None, label=None, width=400, height=400, margin_x=1, title="graph"
     p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
                                        code=tap_code))
 
-    double_tap_code = """
-    oscTarget = (oscTarget + 1) %% (maxLabel + 1);
-    %s
-    """ % (__speak_js("`label ${oscTarget} is selected`"))
-    p.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
-                                             code=double_tap_code))
+    if len(set(label)) > 1:
+        double_tap_code = """
+        oscTarget = (oscTarget + 1) %% (maxLabel + 1);
+        %s
+        """ % (__speak_js("`label ${oscTarget} is selected`"))
+        p.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
+                                                 code=double_tap_code))
 
     p.js_on_event(events.MouseEnter, __speak_enter(title))
     p.js_on_event(events.MouseLeave, __speak_leave(title))
