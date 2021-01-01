@@ -25,11 +25,12 @@ def __overlay_plot(tones, lines, labels, min_freq, min_value, tic, duration, gai
     __tones = None
     for t in range(lines.shape[1]):
         __tones_t = AudioSegment.silent(duration=0)
+        __duration = int(duration/4)
 
         for x, y in enumerate(lines[:, t]):
             gen = [Sine, Pulse, Square, Sawtooth, Triangle][t](min_freq + (y - min_value) * tic)
             wav = gen.to_audio_segment(duration=duration).apply_gain(gains[t])
-            wav = wav.fade_in(duration/4).fade_out(duration/4).pan(-1.0 + x / lines.shape[0]*2)
+            wav = wav.fade_in(__duration).fade_out(__duration).pan(-1.0 + x / lines.shape[0]*2)
             __tones_t += wav
 
         if __tones is None:
@@ -43,11 +44,12 @@ def __overlay_plot(tones, lines, labels, min_freq, min_value, tic, duration, gai
 def __sequential_plot(tones, lines, labels, min_freq, min_value, tic, duration, gains):
     for t in range(lines.shape[1]):
         tones += __tts(labels[t])
+        __duration = int(duration/4)
 
         for x, y in enumerate(lines[:, t]):
             gen = Sine(min_freq + (y - min_value) * tic)
             sine = gen.to_audio_segment(duration=duration).apply_gain(gains[t])
-            sine = sine.fade_in(duration/4).fade_out(duration/4).pan(-1.0 + x / lines.shape[0] * 2)
+            sine = sine.fade_in(__duration).fade_out(__duration).pan(-1.0 + x / lines.shape[0] * 2)
             tones += sine
 
     return tones
