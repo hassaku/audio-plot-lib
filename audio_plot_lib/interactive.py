@@ -123,9 +123,9 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         x = x.tolist()
 
     if label == None:
-        label = np.zeros_like(y).tolist()
+        label = np.zeros_like(y).astype(int).tolist()
     elif type(label) == np.ndarray:
-        label = label.tolist()
+        label = label.astype(int).tolist()
 
     __set_context()
     output_notebook()
