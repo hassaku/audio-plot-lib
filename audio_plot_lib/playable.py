@@ -57,6 +57,57 @@ def __sequential_plot(tones, lines, labels, min_freq, min_value, tic, duration, 
 
 def plot(lines: np.array, labels: list=None, ptype: str="sequential", duration: int=50, gain: int=-5, gains: list=None,
         min_freq: float=130.813, max_freq: float=130.813*4, decimals: int=1, description: bool=True, autoplay: bool=True) -> AudioSegment:
+    """Plots that represent data with sound and can be checked by only audio
+
+    Play back the data given in the array as sound in order.
+    The value is expressed by the pitch of the sound.
+
+    Parameters
+    ----------
+    lines : np.array
+        A numpy array of values to be graphed.
+        If you have two types of data, you need to align them
+        to the same length and pass them as a two-dimensional array.
+        The rows are the data length and the columns are the data type.
+    labels: list
+        The name of the data to be read out. Optional.
+    ptype: str
+        The default "sequential" will play back multiple data in order when multiple data are available,
+        while the "overlay" will play back multiple data at the same time.
+        Default is sequential.
+    duration: int
+        Length of each note.
+        Default is 50 msec.
+    gain: int
+        Volume of sound applied commonly.
+        Default is -5 dB.
+    gains: list
+        Volumes of each sound. Optional.
+    min_freq: float
+        The lowest frequency, corresponding to the minimum value.
+        Default is 130.813 Hz
+    max_freq: float
+        The highest frequency, corresponding to the maximum value.
+        Default is 130.813*4 Hz
+    decimals: int
+        Read out floating point.
+        Default is 1
+    description: bool
+        Whether to read out loud or not.
+        Default is true
+    autoplay: bool
+        Whether to play immediately after execution.
+        Default is true
+
+    Examples
+    --------
+    >>> plot(np.arange(0, np.pi*2, 0.1))
+    <IPython.lib.display.Audio object>
+    >>> plot(np.array([np.arange(0, np.pi*2, 0.1), -1 * np.arange(0, np.pi*2, 0.1)]).T,\
+            ptype="overlay", duration=20, gains=[-2, -3], min_freq=130.813/2, max_freq=130.813*3,\
+            decimals=2, description=False, labels=["A", "B"])
+    <IPython.lib.display.Audio object>
+    """
 
     if type(lines) == list:
         lines = np.array(copy.copy(lines))
