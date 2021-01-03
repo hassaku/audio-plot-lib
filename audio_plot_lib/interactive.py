@@ -34,8 +34,8 @@ def __speak_js(utterance):
 
 
 def __speak_inout(title="image", enter=True, read_label=False):
-    if read_label:
-        label_message = ". Label ${oscTarget} is selected. Double click to change."
+    if read_label and enter:
+        label_message = ". Label $\{oscTarget\} is selected. Double click to change."
     else:
         label_message = ""
 
