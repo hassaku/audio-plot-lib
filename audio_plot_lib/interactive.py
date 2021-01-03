@@ -46,7 +46,7 @@ def __speak_inout(title="image", enter=True, read_label=False):
     else:
         inout_message = f"Leave {title}"
 
-    return CustomJS(code=__speak_js(f"\'{inout_message + label_message}\'"))
+    return CustomJS(code=__speak_js(f"`{inout_message + label_message}`"))
 
 
 __COMMON_JS = """
