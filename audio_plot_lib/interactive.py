@@ -33,12 +33,20 @@ def __speak_js(utterance):
         """
 
 
-def __speak_enter(title="image"):
-    return CustomJS(code=__speak_js(f"\'Enter {title}\'"))
+def __speak_inout(title="image", enter=True, read_label=False):
+    if read_label:
+        label_message = ". Label ${oscTarget} is selected. Double click to change."
+    else:
+        label_message = ""
 
 
-def __speak_leave(title="image"):
-    return CustomJS(code=__speak_js(f"\'Leave {title}\'"))
+    if enter:
+        inout_message = f"Enter {title}"
+
+    else:
+        inout_message = f"Leave {title}"
+
+    return CustomJS(code=__speak_js(f"\'{inout_message + label_message}\'"))
 
 
 __COMMON_JS = """
@@ -172,7 +180,9 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         p.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
                                                  code=double_tap_code))
 
-    p.js_on_event(events.MouseEnter, __speak_enter(title))
-    p.js_on_event(events.MouseLeave, __speak_leave(title))
+
+    read_label = (max(label) > 0)
+    p.js_on_event(events.MouseEnter, __speak_inout(title, True, read_label))
+    p.js_on_event(events.MouseLeave, __speak_inout(title, False, read_label))
 
     show(p)
