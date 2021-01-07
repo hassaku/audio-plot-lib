@@ -80,7 +80,7 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
 
 
 def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400,
-         margin_x: int=1, title: str="graph"):
+        margin_x: int=1, title: str="graph", notebook: bool=True):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -135,8 +135,10 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     elif type(label) == np.ndarray:
         label = label.astype(int).tolist()
 
-    __set_context()
-    output_notebook()
+    if notebook:
+        __set_context()
+        output_notebook()
+
     p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
 
     colors = [__COLORS[c] for c in label]
@@ -186,3 +188,36 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     p.js_on_event(events.MouseLeave, __speak_inout(title, False, read_label))
 
     show(p)
+
+
+if __name__ == "__main__":
+    plot(x=[0, 1, 2], y=[4, 5, 6], label=[0, 0, 1], notebook=False)
+
+    from bs4 import BeautifulSoup
+
+    HTML = """
+    <button id="unmuteButton">Push here to unmute graph</button>
+    <script>
+      document.getElementById('unmuteButton').addEventListener('click', function() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioGain = audioContext.createGain();
+        panNode = audioContext.createStereoPanner();
+        osc = audioContext.createOscillator();
+        osc.connect(panNode);
+        panNode.connect(audioGain);
+        audioGain.connect(audioContext.destination);
+        osc.start(audioContext.currentTime);
+        audioGain.gain.setValueAtTime(0, audioContext.currentTime);
+        oscTarget = 0;
+      })
+    </script>
+    """
+
+    html_filename = __file__.replace(".py", ".html")
+
+    soup = BeautifulSoup(open(html_filename), 'html.parser')
+    soup.body.insert(0, BeautifulSoup(HTML, "html.parser")) # after body
+
+    with open(html_filename, "w") as file:
+        file.write(str(soup))
+
