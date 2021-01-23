@@ -9,7 +9,7 @@ with open("README.md") as f:
 
 setup(
     name="audio-plot-lib",
-    version="0.0.4",
+    version="0.0.5",
     description="Plot tools based on audio",
     long_description=long_description,
     long_description_content_type="text/markdown",
