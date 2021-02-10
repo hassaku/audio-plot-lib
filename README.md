@@ -2,10 +2,36 @@
 
 This library provides graph sonification functions in Google Colab
 
+# Use in Google Colab (recommended)
+
 Try the following example.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hassaku/audio-plot-lib/blob/master/audio_plot_lib_example.ipynb)
 
+# Use in script (option)
+
+Install this library and the dependent ffpmeg.
+
+```
+$ sudo apt-get install libavformat-dev libavfilter-dev libavdevice-dev ffmpeg
+$ pip install audio-plot-lib
+```
+
+## Example
+
+```
+import audio_plot_lib as apl
+from pydub.playback import play
+
+# generate graph sound
+audio = apl.playable.plot([0, 1, 2, 3, 2, 1, 0], duration=300, autoplay=False)
+
+# play
+play(audio)
+
+# save to audio file
+audio.export("graph.wav", format="wav")
+```
 
 # For contributer
 
