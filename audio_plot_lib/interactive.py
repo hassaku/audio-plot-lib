@@ -80,7 +80,7 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
 
 
 def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400,
-        margin_x: int=1, title: str="graph", notebook: bool=True):
+        margin_x: int=1, title: str="graph", script_name: str=""):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -135,7 +135,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     elif type(label) == np.ndarray:
         label = label.astype(int).tolist()
 
-    if notebook:
+    if script_name == "":
         __set_context()
         output_notebook()
 
@@ -189,35 +189,31 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     show(p)
 
+    if script_name != "":
+        from bs4 import BeautifulSoup
 
-if __name__ == "__main__":
-    plot(x=[0, 1, 2], y=[4, 5, 6], label=[0, 0, 1], notebook=False)
+        HTML = """
+        <button id="unmuteButton">Push here to unmute graph</button>
+        <script>
+          document.getElementById('unmuteButton').addEventListener('click', function() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioGain = audioContext.createGain();
+            panNode = audioContext.createStereoPanner();
+            osc = audioContext.createOscillator();
+            osc.connect(panNode);
+            panNode.connect(audioGain);
+            audioGain.connect(audioContext.destination);
+            osc.start(audioContext.currentTime);
+            audioGain.gain.setValueAtTime(0, audioContext.currentTime);
+            oscTarget = 0;
+          })
+        </script>
+        """
 
-    from bs4 import BeautifulSoup
+        html_filename = script_name.replace(".py", ".html")
+        soup = BeautifulSoup(open(html_filename), 'html.parser')
+        soup.body.insert(0, BeautifulSoup(HTML, "html.parser")) # after body
 
-    HTML = """
-    <button id="unmuteButton">Push here to unmute graph</button>
-    <script>
-      document.getElementById('unmuteButton').addEventListener('click', function() {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        audioGain = audioContext.createGain();
-        panNode = audioContext.createStereoPanner();
-        osc = audioContext.createOscillator();
-        osc.connect(panNode);
-        panNode.connect(audioGain);
-        audioGain.connect(audioContext.destination);
-        osc.start(audioContext.currentTime);
-        audioGain.gain.setValueAtTime(0, audioContext.currentTime);
-        oscTarget = 0;
-      })
-    </script>
-    """
-
-    html_filename = __file__.replace(".py", ".html")
-
-    soup = BeautifulSoup(open(html_filename), 'html.parser')
-    soup.body.insert(0, BeautifulSoup(HTML, "html.parser")) # after body
-
-    with open(html_filename, "w") as file:
-        file.write(str(soup))
+        with open(html_filename, "w") as file:
+            file.write(str(soup))
 

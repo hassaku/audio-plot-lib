@@ -10,14 +10,38 @@ Try the following example.
 
 # Use in script (option)
 
-Install this library and the dependent ffpmeg.
+## Interactive
+
+Generate html with graphs that can be displayed interactively in a browser.
+
+### Dependency
+
+```
+$ pip install audio-plot-lib
+$ pip install beautifulsoup4
+```
+
+### Example
+
+```
+import audio_plot_lib as apl
+apl.interactive.plot([0, 1, 2, 3, 2, 1, 0], script_name=__file__)
+```
+
+Open the html file with the same name as the script name in your browser, and if you find a button that reads 'push here to unmute graph', try moving the mouse cursor appropriately after pressing the button. If not, try reloading the page.
+
+## Playable
+
+Generate an audio file with sonified graphs.
+
+### Dependency
 
 ```
 $ sudo apt-get install libavformat-dev libavfilter-dev libavdevice-dev ffmpeg
 $ pip install audio-plot-lib
 ```
 
-## Example
+### Example
 
 ```
 import audio_plot_lib as apl
