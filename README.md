@@ -1,6 +1,8 @@
 # audio-plot-lib
 
-This library provides graph sonification functions in Google Colab
+![Python package](https://github.com/hassaku/audio-plot-lib/workflows/Python%20package/badge.svg)
+
+This library provides graph sonification functions
  and has been developed for a project named "Data science and machine learning resources for screen reader users".
  Please refer to the project page for more details.
 
