@@ -1,3 +1,4 @@
 pydub
 bokeh
+ipython
 audio-plot-lib
