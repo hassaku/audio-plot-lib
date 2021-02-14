@@ -62,7 +62,7 @@ audio.export("graph.wav", format="wav")
 ## Update PyPI
 
 ```
-$ nosetests -vs
+$ python -m unittest discover tests
 $ pip install twine # if necessary
 $ cat ~/.pypirc  # if necessary
 [distutils]

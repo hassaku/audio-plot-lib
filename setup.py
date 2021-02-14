@@ -19,7 +19,7 @@ setup(
     packages=["audio_plot_lib"],
     include_package_data=True,
     install_requires=["pydub", "numpy", "gTTS", "bokeh"],
-    tests_require=["nose", "mock"],
+    tests_require=[],
     license="MIT",
     keywords="audio plot visually-impaired",
     zip_safe=False,
