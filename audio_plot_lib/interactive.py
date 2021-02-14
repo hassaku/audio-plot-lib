@@ -25,12 +25,12 @@ def __set_context():
 
 
 def __speak_js(utterance):
-    return f"""
+    return """
         window.speechSynthesis.cancel();
-        let msg = new SpeechSynthesisUtterance({utterance});
+        let msg = new SpeechSynthesisUtterance({});
         msg.lang = "en-US";
         window.speechSynthesis.speak(msg);
-        """
+        """.format(utterance)
 
 
 def __speak_inout(title="image", enter=True, read_label=False):
@@ -41,12 +41,12 @@ def __speak_inout(title="image", enter=True, read_label=False):
 
 
     if enter:
-        inout_message = f"Enter {title}"
+        inout_message = "Enter {}".format(title)
 
     else:
-        inout_message = f"Leave {title}"
+        inout_message = "Leave {}".format(title)
 
-    return CustomJS(code=__speak_js(f"`{inout_message + label_message}`"))
+    return CustomJS(code=__speak_js("`{}`".format(inout_message + label_message)))
 
 
 __COMMON_JS = """
