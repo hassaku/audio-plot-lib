@@ -1,6 +1,10 @@
 # audio-plot-lib
 
 This library provides graph sonification functions in Google Colab
+ and has been developed for a project named "Data science and machine learning resources for screen reader users".
+ Please refer to the project page for more details.
+
+https://hassaku.github.io/DS-and-ML-with-screen-reader/
 
 # Use in Google Colab (recommended)
 
