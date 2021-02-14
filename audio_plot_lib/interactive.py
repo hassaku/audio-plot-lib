@@ -115,8 +115,6 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     <IPython.core.display.HTML object>
     """
 
-    assert type(y) == list, "y must be list type data."
-
     if label:
         assert max(label) < len(__COLORS), "max label must be lower {}".format(len(__COLORS))
         assert max(label) + 1 == len(set(label)), "label should be in {} because max label is {}.".format(
@@ -125,15 +123,15 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     if type(y) == np.ndarray:
         y = y.tolist()
 
-    if x == None:
-        x = np.arange(len(y)).tolist()
-    elif type(x) == np.ndarray:
+    if type(x) == np.ndarray:
         x = x.tolist()
+    elif x == None:
+        x = np.arange(len(y)).tolist()
 
-    if label == None:
-        label = np.zeros_like(y).astype(int).tolist()
-    elif type(label) == np.ndarray:
+    if type(label) == np.ndarray:
         label = label.astype(int).tolist()
+    elif label == None:
+        label = np.zeros_like(y).astype(int).tolist()
 
     if script_name == "":
         __set_context()
