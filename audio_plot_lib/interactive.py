@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 from bokeh import events
-from bokeh.models import CustomJS, HoverTool, Slider
+from bokeh.models import CustomJS, HoverTool, Slider, Div
 from bokeh.plotting import figure, output_notebook, show
 from bokeh.layouts import column, row
 from IPython.display import HTML, display
@@ -203,14 +203,15 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     sliders = []
     for l in range(max(label)+1):
-        slider = Slider(start=np.min(x)-1, end=np.max(x)+1, value=np.mean(x),
-            step=(np.max(x)-np.min(x))/np.min([20, np.max(x)-np.min(x)+2]), title="label %d" % (l+1))
+        slider = Slider(start=np.min(x)-1, end=np.max(x)+1, value=np.min(x), step=1, title="label %d" % (l+1))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
             "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
 
     # layout
-    show(row(plot, column(sliders)))
+    message1 = Div(text="""<h2>output of audio plot lib</h2>""")
+    message2 = Div(text="""<p>There is a graph and a series of sliders to check the values. If you have a mouse, you can check the values by hovering over the graph. If you are using only a keyboard, you can move the slider to move the horizontal axis of the graph to check the value of the graph as a pitch according to the location.</p>""")
+    show(column(message1, message2, row(plot, column(sliders))))
 
     if script_name != "":
         from bs4 import BeautifulSoup
