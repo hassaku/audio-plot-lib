@@ -202,7 +202,8 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     sliders = []
     for l in range(max(label)+1):
-        slider = Slider(start=min(x), end=max(x), value=np.mean(x), step=(max(x)-min(x))/20, title="label %d" % (l+1))
+        slider = Slider(start=np.min(x)-1, end=np.max(x)+1, value=np.mean(x),
+            step=(np.max(x)-np.min(x))/np.min([20, np.max(x)-np.min(x)+2]), title="label %d" % (l+1))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
             "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
