@@ -143,10 +143,9 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     colors = [__COLORS[c] for c in label]
     plot.scatter(x, y, line_color=colors, fill_color=colors)
 
-
     sound_js = """
     %s
-    if(diff[nearestIdx] > %s) {
+    if(diff[nearestIdx] > marginX) {
         return;
     }
 
@@ -158,13 +157,14 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """ % (__FIND_NEAREST_JS, margin_x)
+    """ % (__FIND_NEAREST_JS)
 
     # Mouse hover on plot
     hover_code = """
+    let marginX = %s;
     let position = cb_data.geometry.x;
     %s
-    """ % (sound_js)
+    """ % (margin_x, sound_js)
 
     callback = CustomJS(args={"x": x, "y": y, "label": label}, code=hover_code)
     plot.add_tools(HoverTool(tooltips=None, callback=callback))
@@ -196,6 +196,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     # slider for keyboard interaction
     slider_code = """
     oscTarget = target;
+    let marginX = 0;
     let position = slider.value;
     %s
     """ % (sound_js)
