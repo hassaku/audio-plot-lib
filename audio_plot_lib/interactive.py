@@ -203,9 +203,16 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     if slider_partitions is None:
         slider_partitions = np.min([len(x), 30])
+
+    slider_start = np.min(x)
+    slider_end = np.max(x)
+    if slider_start == slider_end:
+        slider_end += 1
+    slider_step = (slider_end - slider_start) / slider_partitions
+
     sliders = []
     for l in range(max(label)+1):
-        slider = Slider(start=np.min(x), end=np.max(x), value=np.min(x), step=(np.max(x)-np.min(x))/slider_partitions, title="label %d" % (l+1))
+        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label %d" % (l+1))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
             "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
