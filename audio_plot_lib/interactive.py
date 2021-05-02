@@ -80,8 +80,8 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
         '#bcbd22', '#17becf']
 
 
-def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400,
-        margin_x: int=1, title: str="graph", script_name: str=""):
+def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400, gain: float=0.4,
+        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=10):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -149,7 +149,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         return;
     }
 
-    const gain = 0.4; // max: 1.0
+    const gain = %s; // max: 1.0
     osc.type = 'triangle'; // sine, square, sawtooth, triangle
     osc.frequency.value = 261.626 + (nearestY - minY) / (maxY - minY) * 261.626 // Hz
     audioGain.gain.linearRampToValueAtTime(gain, audioContext.currentTime + 0.2); // atack
@@ -157,7 +157,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """ % (__FIND_NEAREST_JS)
+    """ % (__FIND_NEAREST_JS, gain)
 
     # Mouse hover on plot
     hover_code = """
@@ -203,7 +203,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     sliders = []
     for l in range(max(label)+1):
-        slider = Slider(start=np.min(x)-1, end=np.max(x)+1, value=np.min(x), step=1, title="label %d" % (l+1))
+        slider = Slider(start=np.min(x), end=np.max(x), value=np.min(x), step=(np.max(x)-np.min(x))/slider_partitions, title="label %d" % (l+1))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
             "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
