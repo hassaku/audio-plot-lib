@@ -81,7 +81,7 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
 
 
 def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400, gain: float=0.4,
-        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=10):
+        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=None):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -196,11 +196,13 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     # slider for keyboard interaction
     slider_code = """
     oscTarget = target;
-    let marginX = 0;
+    let marginX = %s;
     let position = slider.value;
     %s
-    """ % (sound_js)
+    """ % (margin_x, sound_js)
 
+    if slider_partitions is None:
+        slider_partitions = np.min([len(x), 30])
     sliders = []
     for l in range(max(label)+1):
         slider = Slider(start=np.min(x), end=np.max(x), value=np.min(x), step=(np.max(x)-np.min(x))/slider_partitions, title="label %d" % (l+1))
