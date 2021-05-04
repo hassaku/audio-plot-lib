@@ -1,8 +1,9 @@
 import copy
 import numpy as np
 from bokeh import events
-from bokeh.models import CustomJS, HoverTool
+from bokeh.models import CustomJS, HoverTool, Slider, Div
 from bokeh.plotting import figure, output_notebook, show
+from bokeh.layouts import column, row
 from IPython.display import HTML, display
 
 def __set_context():
@@ -49,13 +50,13 @@ def __speak_inout(title="image", enter=True, read_label=False):
     return CustomJS(code=__speak_js("`{}`".format(inout_message + label_message)))
 
 
-__COMMON_JS = """
+__FIND_NEAREST_JS = """
 let minX = Math.min(...x);
 let maxX = Math.max(...x);
 let minY = Math.min(...y);
 let maxY = Math.max(...y);
 
-if((mouseX == Infinity) || (mouseX < minX) || (mouseX > maxX)) {
+if((position == Infinity) || (position < minX) || (position > maxX)) {
     return;
 }
 
@@ -65,7 +66,7 @@ x.forEach(function(val, idx){
     if(label[idx] != oscTarget) {
         return;
     }
-    diff[idx] = Math.abs(mouseX - val);
+    diff[idx] = Math.abs(position - val);
     nearestIdx = (diff[nearestIdx] < diff[idx]) ? nearestIdx : idx;
 });
 
@@ -79,8 +80,8 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
         '#bcbd22', '#17becf']
 
 
-def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400,
-        margin_x: int=1, title: str="graph", script_name: str=""):
+def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400, gain: float=0.4,
+        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=None):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -137,21 +138,18 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         __set_context()
         output_notebook()
 
-    p = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
+    plot = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
 
     colors = [__COLORS[c] for c in label]
-    p.scatter(x, y, line_color=colors, fill_color=colors)
+    plot.scatter(x, y, line_color=colors, fill_color=colors)
 
-    hover_code = """
-    let mouseX = cb_data.geometry.x;
+    sound_js = """
     %s
-    const marginX = %s;
-
     if(diff[nearestIdx] > marginX) {
         return;
     }
 
-    const gain = 0.4; // max: 1.0
+    const gain = %s; // max: 1.0
     osc.type = 'triangle'; // sine, square, sawtooth, triangle
     osc.frequency.value = 261.626 + (nearestY - minY) / (maxY - minY) * 261.626 // Hz
     audioGain.gain.linearRampToValueAtTime(gain, audioContext.currentTime + 0.2); // atack
@@ -159,33 +157,70 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """ % (__COMMON_JS, margin_x)
+    """ % (__FIND_NEAREST_JS, gain)
+
+    # Mouse hover on plot
+    hover_code = """
+    let marginX = %s;
+    let position = cb_data.geometry.x;
+    %s
+    """ % (margin_x, sound_js)
 
     callback = CustomJS(args={"x": x, "y": y, "label": label}, code=hover_code)
-    p.add_tools(HoverTool(tooltips=None, callback=callback))
+    plot.add_tools(HoverTool(tooltips=None, callback=callback))
 
+    # Single tap on plot
     tap_code = """
-    let mouseX = cb_obj.x;
+    let position = cb_obj.x;
     %s
     %s
-    """ % (__COMMON_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
-    p.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
+    """ % (__FIND_NEAREST_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+
+    plot.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
                                        code=tap_code))
 
     if len(set(label)) > 1:
+        # Double tap on plot
         double_tap_code = """
         oscTarget = (oscTarget + 1) %% (maxLabel + 1);
         %s
         """ % (__speak_js("`label ${oscTarget} is selected`"))
-        p.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
+        plot.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
                                                  code=double_tap_code))
 
-
+    # Enter or leave on plot
     read_label = (max(label) > 0)
-    p.js_on_event(events.MouseEnter, __speak_inout(title, True, read_label))
-    p.js_on_event(events.MouseLeave, __speak_inout(title, False, read_label))
+    plot.js_on_event(events.MouseEnter, __speak_inout(title, True, read_label))
+    plot.js_on_event(events.MouseLeave, __speak_inout(title, False, read_label))
 
-    show(p)
+    # slider for keyboard interaction
+    slider_code = """
+    oscTarget = target;
+    let marginX = %s;
+    let position = slider.value;
+    %s
+    """ % (margin_x, sound_js)
+
+    if slider_partitions is None:
+        slider_partitions = np.min([len(x), 30])
+
+    slider_start = np.min(x)
+    slider_end = np.max(x)
+    if slider_start == slider_end:
+        slider_end += 1
+    slider_step = (slider_end - slider_start) / slider_partitions
+
+    sliders = []
+    for l in range(max(label)+1):
+        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label %d" % (l+1))
+        slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
+            "slider": slider, "target": l}, code=slider_code))
+        sliders.append(slider)
+
+    # layout
+    message1 = Div(text="""<h2>output of audio plot lib</h2>""")
+    message2 = Div(text="""<p>There is a graph and a series of sliders to check the values. If you have a mouse, you can check the values by hovering over the graph. If you are using only a keyboard, you can move the slider to move the horizontal axis of the graph to check the value of the graph as a pitch according to the location.</p>""")
+    show(column(message1, message2, row(plot, column(sliders))))
 
     if script_name != "":
         from bs4 import BeautifulSoup
