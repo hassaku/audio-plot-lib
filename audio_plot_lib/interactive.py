@@ -202,7 +202,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     """ % (margin_x, sound_js)
 
     if slider_partitions is None:
-        slider_partitions = np.min([len(x), 30])
+        slider_partitions = np.min([len(x)-1, 30])
 
     slider_start = np.min(x)
     slider_end = np.max(x)
