@@ -199,7 +199,8 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     let marginX = %s;
     let position = slider.value;
     %s
-    """ % (margin_x, sound_js)
+    setTimeout(function(){%s}, 3000);
+    """ % (margin_x, sound_js, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
 
     if slider_partitions is None:
         slider_partitions = np.min([len(x)-1, 30])
@@ -213,8 +214,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     sliders = []
     for l in range(max(label)+1):
         slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label %d" % (l+1))
-        slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label,
-            "slider": slider, "target": l}, code=slider_code))
+        slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label, "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
 
     # layout
