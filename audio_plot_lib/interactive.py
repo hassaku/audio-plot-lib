@@ -194,26 +194,30 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     plot.js_on_event(events.MouseLeave, __speak_inout(title, False, read_label))
 
     # slider for keyboard interaction
-    slider_code = """
-    oscTarget = target;
-    let marginX = %s;
-    let position = slider.value;
-    %s
-    setTimeout(function(){%s}, 3000);
-    """ % (margin_x, sound_js, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
-
-    if slider_partitions is None:
-        slider_partitions = np.min([len(x)-1, 30])
-
-    slider_start = np.min(x)
-    slider_end = np.max(x)
-    if slider_start == slider_end:
-        slider_end += 1
-    slider_step = (slider_end - slider_start) / slider_partitions
-
     sliders = []
     for l in range(max(label)+1):
-        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label %d" % (l+1))
+        __x = np.array(x)[np.array(label) == l].tolist()
+
+        if slider_partitions is None:
+            slider_partitions = np.min([len(__x)-1, 30])
+            if slider_partitions == 30:
+                print("The number of slider partitions has been reduced to 30 as the default limit. Please set slider_partitions as an argument if necessary.")
+
+        slider_start = np.min(__x)
+        slider_end = np.max(__x)
+        if slider_start == slider_end:
+            slider_end += 1
+        slider_step = (slider_end - slider_start) / slider_partitions
+
+        slider_code = """
+        oscTarget = target;
+        let marginX = %s;
+        let position = slider.value;
+        %s
+        setTimeout(function(){%s}, 3000);
+        """ % (slider_step, sound_js, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+
+        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label {}".format(l))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label, "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
 
