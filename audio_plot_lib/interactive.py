@@ -4,6 +4,7 @@ from bokeh import events
 from bokeh.models import CustomJS, HoverTool, Slider, Div
 from bokeh.plotting import figure, output_notebook, show
 from bokeh.layouts import column, row
+from bokeh.models import LinearAxis, Range1d
 from IPython.display import HTML, display
 
 def __set_context():
@@ -51,10 +52,25 @@ def __speak_inout(title="image", enter=True, read_label=False):
 
 
 __FIND_NEAREST_JS = """
-let minX = Math.min(...x);
-let maxX = Math.max(...x);
-let minY = Math.min(...y);
-let maxY = Math.max(...y);
+var minX, maxX, minY, maxY;
+if(multiAxes) {
+  var labeledX = [];
+  var labeledY = [];
+  x.forEach(function(val, idx){
+      if(label[idx] != oscTarget) { return; }
+      labeledX.push(x[idx]);
+      labeledY.push(y[idx]);
+  });
+  minX = Math.min(...labeledX);
+  maxX = Math.max(...labeledX);
+  minY = Math.min(...labeledY);
+  maxY = Math.max(...labeledY);
+} else {
+  minX = Math.min(...x);
+  maxX = Math.max(...x);
+  minY = Math.min(...y);
+  maxY = Math.max(...y);
+}
 
 if((position == Infinity) || (position < minX) || (position > maxX)) {
     return;
@@ -81,7 +97,8 @@ __COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
 
 
 def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=400, gain: float=0.4,
-        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=None):
+        margin_x: int=1, title: str="graph", script_name: str="", slider_partitions: int=None,
+        multiple_axes=False):
     """Plots that represent data with sound and can be checked interactively
 
     You can interactively check the data in graph form by moving the mouse cursor.
@@ -107,6 +124,8 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         Height of the graph image (in pixels). Optional.
     title: str
         Graph name to be read out. Optional.
+    multiple_axes: bool
+        Set to True if you want each label to have a separate y-axis. Optional.
 
     Examples
     --------
@@ -139,11 +158,30 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         output_notebook()
 
     plot = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
-
     colors = [__COLORS[c] for c in label]
-    plot.scatter(x, y, line_color=colors, fill_color=colors)
+
+    if multiple_axes:
+        assert max(label) == 1, "The number of labels must be two kinds"
+
+        multi_axes_str = "true"
+        y_ranges = {}
+        for l in range(max(label)+1):
+            __x = np.array(x)[np.array(label) == l].tolist()
+            __y = np.array(y)[np.array(label) == l].tolist()
+            __c = np.array(colors)[np.array(label) == l].tolist()
+            plot.scatter(__x, __y, line_color=__c, fill_color=__c, y_range_name=str(l))
+            if l == 1:
+                plot.add_layout(LinearAxis(y_range_name=str(l)), 'right')
+            y_ranges[str(l)] = Range1d(start=min(__y) - 1, end=max(__y) + 1)
+
+        plot.extra_y_ranges = y_ranges
+
+    else:
+        multi_axes_str = "false"
+        plot.scatter(x, y, line_color=colors, fill_color=colors)
 
     sound_js = """
+    const multiAxes = %s;
     %s
     if(diff[nearestIdx] > marginX) {
         return;
@@ -157,7 +195,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
 
     let pan = (nearestX - minX) / (maxX - minX) * 2 - 1;
     panNode.pan.value = pan;  // left:-1 ~ right:1
-    """ % (__FIND_NEAREST_JS, gain)
+    """ % (multi_axes_str, __FIND_NEAREST_JS, gain)
 
     # Mouse hover on plot
     hover_code = """
@@ -172,9 +210,10 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     # Single tap on plot
     tap_code = """
     let position = cb_obj.x;
+    const multiAxes = %s;
     %s
     %s
-    """ % (__FIND_NEAREST_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+    """ % (multi_axes_str, __FIND_NEAREST_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
 
     plot.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
                                        code=tap_code))
