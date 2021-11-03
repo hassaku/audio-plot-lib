@@ -135,11 +135,6 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     <IPython.core.display.HTML object>
     """
 
-    if label:
-        assert max(label) < len(__COLORS), "max label must be lower {}".format(len(__COLORS))
-        assert max(label) + 1 == len(set(label)), "label should be in {} because max label is {}.".format(
-                    list(range(max(label) + 1)), max(label))
-
     if type(y) == np.ndarray:
         y = y.tolist()
 
@@ -152,6 +147,11 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         label = label.astype(int).tolist()
     elif label == None:
         label = np.zeros_like(y).astype(int).tolist()
+
+    if label:
+        assert max(label) < len(__COLORS), "max label must be lower {}".format(len(__COLORS))
+        assert max(label) + 1 == len(set(label)), "label should be in {} because max label is {}.".format(
+                    list(range(max(label) + 1)), max(label))
 
     if script_name == "":
         __set_context()
