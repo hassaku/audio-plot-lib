@@ -31,6 +31,7 @@ $ pip install beautifulsoup4
 
 ```
 import audio_plot_lib as apl
+# apl.interactive.set_language("ja")  # Option to change language. Default is "en"
 apl.interactive.plot([0, 1, 2, 3, 2, 1, 0], script_name=__file__)
 ```
 

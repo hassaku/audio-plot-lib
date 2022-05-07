@@ -7,6 +7,22 @@ from bokeh.layouts import column, row
 from bokeh.models import LinearAxis, Range1d
 from IPython.display import HTML, display
 
+language = "en"
+
+
+def set_language(lang: str):
+    """Set language
+
+    Parameters
+    ----------
+    longc: str
+        'ja' or 'en', default is 'en'.
+    """
+    global language
+    assert lang in ["ja", "en"], "lang must be ja or en."
+    language = lang
+
+
 def __set_context():
     display(HTML('''
     <script>
@@ -22,7 +38,6 @@ def __set_context():
         audioGain.gain.setValueAtTime(0, audioContext.currentTime);
     }
     oscTarget = 0;
-    </script>
     '''))
 
 
@@ -30,23 +45,30 @@ def __speak_js(utterance):
     return """
         window.speechSynthesis.cancel();
         let msg = new SpeechSynthesisUtterance({});
-        msg.lang = "en-US";
+        msg.lang = '{}';
         window.speechSynthesis.speak(msg);
-        """.format(utterance)
+        """.format(utterance, "ja-JP" if language == "ja" else "en-US")
 
 
 def __speak_inout(title="image", enter=True, read_label=False):
+    if enter:
+        if language == "ja":
+            inout_message = "{}に入りました".format(title)
+        else:
+            inout_message = "Enter {}".format(title)
+    else:
+        if language == "ja":
+            inout_message = "{}から出ました".format(title)
+        else:
+            inout_message = "Leave {}".format(title)
+
     if read_label and enter:
-        label_message = ". Label ${oscTarget} is selected. Double click to change."
+        if language == "ja":
+            label_message = "。ラベル ${oscTarget} を選択中。ダブルクリックで変更できます。"
+        else:
+            label_message = ". Label ${oscTarget} is selected. Double click to change."
     else:
         label_message = ""
-
-
-    if enter:
-        inout_message = "Enter {}".format(title)
-
-    else:
-        inout_message = "Leave {}".format(title)
 
     return CustomJS(code=__speak_js("`{}`".format(inout_message + label_message)))
 
@@ -208,22 +230,32 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
     plot.add_tools(HoverTool(tooltips=None, callback=callback))
 
     # Single tap on plot
+    if language == "ja":
+        utterance = "`エックスは${nearestX}。ワイは${nearestY}`"
+    else:
+        utterance = "`X is ${nearestX}. Y is ${nearestY}`"
+
     tap_code = """
     let position = cb_obj.x;
     const multiAxes = %s;
     %s
     %s
-    """ % (multi_axes_str, __FIND_NEAREST_JS, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+    """ % (multi_axes_str, __FIND_NEAREST_JS, __speak_js(utterance))
 
     plot.js_on_event(events.Tap, CustomJS(args={"x": x, "y": y, "label": label},
                                        code=tap_code))
 
     if len(set(label)) > 1:
         # Double tap on plot
+        if language == "ja":
+            utterance = "`ラベル ${oscTarget} が選択されています。`"
+        else:
+            utterance = "`label ${oscTarget} is selected`"
+
         double_tap_code = """
         oscTarget = (oscTarget + 1) %% (maxLabel + 1);
         %s
-        """ % (__speak_js("`label ${oscTarget} is selected`"))
+        """ % (__speak_js(utterance))
         plot.js_on_event(events.DoubleTap, CustomJS(args={"maxLabel": max(label)},
                                                  code=double_tap_code))
 
@@ -240,7 +272,12 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         if slider_partitions is None:
             slider_partitions = np.min([len(__x)-1, 30])
             if slider_partitions == 30:
-                print("The number of slider partitions has been reduced to 30 as the default limit. Please set slider_partitions as an argument if necessary.")
+                if language == "ja":
+                    print("30個以上のデータがあるため、それ以上の細かさが省略されています。"\
+                          "もっと細かく分割するためにはslider_partitionsの引数の値を大きくしてください。")
+                else:
+                    print("The number of slider partitions has been reduced to 30 as the default limit. "\
+                          "Please set slider_partitions as an argument if necessary.")
 
         slider_start = np.min(__x)
         slider_end = np.max(__x)
@@ -248,30 +285,49 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
             slider_end += 1
         slider_step = (slider_end - slider_start) / slider_partitions
 
+        if language == "ja":
+            utterance = "`エックスは${nearestX}。ワイは${nearestY}`"
+        else:
+            utterance = "`X is ${nearestX}. Y is ${nearestY}`"
+
         slider_code = """
         oscTarget = target;
         let marginX = %s;
         let position = slider.value;
         %s
         setTimeout(function(){%s}, 3000);
-        """ % (slider_step, sound_js, __speak_js("`X is ${nearestX}. Y is ${nearestY}`"))
+        """ % (slider_step, sound_js, __speak_js(utterance))
 
-        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step, title="label {}".format(l))
+        slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step,
+                    title="{} {}".format("ラベル" if language == "ja" else "en", l))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label, "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
 
     # layout
-    message1 = Div(text="""<h2>output of audio plot lib</h2>""")
-    message2 = Div(text="""<p>There is a graph and a series of sliders to check the values. If you have a mouse, you can check the values by hovering over the graph. If you are using only a keyboard, you can move the slider to move the horizontal axis of the graph to check the value of the graph as a pitch according to the location.</p>""")
+    if language == "ja":
+        message1 = Div(text="<h2>音声グラフ</h2>")
+        message2 = Div(text="<p>ここにはグラフとスライダーが配置されています。"\
+            "マウスをもっているのであれば、グラフ上をなぞることにより、グラフ上の値を音声で確認することができます。"\
+            "マウスをもっていない場合でも、スライダーを動かすことにより、値を確認することができます。</p>")
+    else:
+        message1 = Div(text="<h2>output of audio plot lib</h2>")
+        message2 = Div(text="<p>There is a graph and a series of sliders to check the values. "\
+            "If you have a mouse, you can check the values by hovering over the graph. "\
+            "If you are using only a keyboard, you can move the slider to move the horizontal axis "\
+            "of the graph to check the value of the graph as a pitch according to the location.</p>")
     show(column(message1, message2, row(plot, column(sliders))))
 
     if script_name != "":
         from bs4 import BeautifulSoup
 
-        HTML = """
-        <button id="unmuteButton">Push here to unmute graph</button>
+        if language == "ja":
+            button = "<button id=\"unmuteButton\">このボタンを押して音声再生を有効化してください</button>"
+        else:
+            button = "<button id=\"unmuteButton\">Push here to unmute graph</button>"
+
+        script = """
         <script>
-          document.getElementById('unmuteButton').addEventListener('click', function() {
+        document.getElementById('unmuteButton').addEventListener('click', function() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             audioGain = audioContext.createGain();
             panNode = audioContext.createStereoPanner();
@@ -282,13 +338,13 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
             osc.start(audioContext.currentTime);
             audioGain.gain.setValueAtTime(0, audioContext.currentTime);
             oscTarget = 0;
-          })
+        })
         </script>
         """
 
         html_filename = script_name.replace(".py", ".html")
         soup = BeautifulSoup(open(html_filename), 'html.parser')
-        soup.body.insert(0, BeautifulSoup(HTML, "html.parser")) # after body
+        soup.body.insert(0, BeautifulSoup(button + script, "html.parser")) # after body
 
         with open(html_filename, "w") as file:
             file.write(str(soup))
