@@ -1,4 +1,4 @@
 pydub
-bokeh
+bokeh==2.4.3
 ipython
 audio-plot-lib
