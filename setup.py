@@ -18,7 +18,7 @@ setup(
     url="https://github.com/hassaku/audio-plot-lib",
     packages=["audio_plot_lib"],
     include_package_data=True,
-    install_requires=["pydub", "numpy", "gTTS", "bokeh", "ipython"],
+    install_requires=["pydub==0.24.1", "numpy", "gTTS==2.2.1", "bokeh==2.4.3", "ipython"],
     tests_require=[],
     license="MIT",
     keywords="audio plot visually-impaired",
