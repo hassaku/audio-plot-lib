@@ -179,7 +179,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         __set_context()
         output_notebook()
 
-    plot = figure(plot_width=width, plot_height=height, tools="", toolbar_location=None)
+    plot = figure(width=width, height=height, tools="", toolbar_location=None)
     colors = [__COLORS[c] for c in label]
 
     if multiple_axes:
