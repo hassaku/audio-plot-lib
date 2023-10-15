@@ -299,7 +299,7 @@ def plot(y: list, x: list=None, label: list=None, width: int=400, height: int=40
         """ % (slider_step, sound_js, __speak_js(utterance))
 
         slider = Slider(start=slider_start, end=slider_end, value=slider_start, step=slider_step,
-                    title="{} {}".format("ラベル" if language == "ja" else "en", l))
+                    title="{} {}".format("ラベル" if language == "ja" else "label", l))
         slider.js_on_change('value', CustomJS(args={"x": x, "y": y, "label": label, "slider": slider, "target": l}, code=slider_code))
         sliders.append(slider)
 
